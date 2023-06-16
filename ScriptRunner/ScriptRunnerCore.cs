@@ -1,23 +1,20 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using CSScriptLib;
+using dotnet_script.Utils;
 
-public class CsScriptRunner : IDisposable {
-    private static Lazy<CsScriptRunner> _instance = new(() => new CsScriptRunner());
-    public static CsScriptRunner Instance {
-        get {
-            return _instance.Value;
-        }
-    }
+namespace dotnet_script.ScriptRunner;
 
-    private ConcurrentDictionary<string, string> _maps = new();
+internal class ScriptRunnerCore : IDisposable
+{
+    private readonly ConcurrentDictionary<string, string> _maps = new();
     private FileSystemWatcher _fileSystemWatcher;
+    private DateTime _lastRead = DateTime.MinValue;
 
-    private CsScriptRunner()
+    public ScriptRunnerCore()
     {
         _fileSystemWatcher = new FileSystemWatcher(AppContext.BaseDirectory)
         {
@@ -31,17 +28,18 @@ public class CsScriptRunner : IDisposable {
         _fileSystemWatcher.Created += WatcherHandler;
     }
 
-    DateTime _lastRead = DateTime.MinValue;
     private void WatcherHandler(object sender, FileSystemEventArgs e)
     {
         DateTime lastWriteTime = File.GetLastWriteTime(e.FullPath);
         if (lastWriteTime == _lastRead) return;
         _lastRead = lastWriteTime;
         Console.WriteLine("pass");
-        if(e.ChangeType == WatcherChangeTypes.Created || e.ChangeType == WatcherChangeTypes.Changed) {            
-            Interval.Set(() => {
+        if(e.ChangeType == WatcherChangeTypes.Created || e.ChangeType == WatcherChangeTypes.Changed)
+        {
+            Interval.Set(() =>
+            {
                 var code = File.ReadAllText(e.FullPath);
-                _maps.AddOrUpdate(Path.GetFileNameWithoutExtension(e.Name), code, (key ,oldValue) => code);
+                _maps.AddOrUpdate(Path.GetFileNameWithoutExtension(e.Name), code, (key, oldValue) => code);
             }, 1000);
         }
     }
@@ -55,7 +53,7 @@ public class CsScriptRunner : IDisposable {
         }
     }
 
-    public async Task Execute<TRequest, TResult>(string filename, TRequest request) {
+    public async Task ExecuteAsync<TRequest, TResult>(string filename, TRequest request) {
         if(_maps.TryGetValue(filename, out var code)) {
             IScriptRunner<TRequest, TResult> runner = CSScript.Evaluator
                 .ReferenceAssembliesFromCode(code)
@@ -84,30 +82,12 @@ public class CsScriptRunner : IDisposable {
 
     private void Dispose(bool disposing)
     {
-        if(disposing) {
+        if(disposing)
+        {
+            _fileSystemWatcher.Changed -= WatcherHandler;
+            _fileSystemWatcher.Created -= WatcherHandler;
             _fileSystemWatcher?.Dispose();
             _fileSystemWatcher = null;
         }
-    }
-}
-
-public static class Interval
-{
-    public static System.Timers.Timer Set(System.Action action, int interval)
-    {
-        var timer = new System.Timers.Timer(interval);
-        timer.Elapsed += (s, e) => {
-            timer.Enabled = false;
-            action();
-            timer.Enabled = true;
-        };
-        timer.Enabled = true;
-        return timer;
-    }
-
-    public static void Stop(System.Timers.Timer timer)
-    {
-        timer.Stop();
-        timer.Dispose();
     }
 }

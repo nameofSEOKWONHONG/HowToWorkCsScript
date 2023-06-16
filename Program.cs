@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Threading.Tasks;
+using dotnet_script.Entities;
 
 public class Program
-{
-    
+{   
     private static async Task Main(string[] args)
     {
-        CsScriptRunner.Instance.Initialize();
-        for(var i = 0; i < 20; i++) {
-            await Task.Delay(1000);
-            await CsScriptRunner.Instance.Execute<int, string>("ScriptRunnerSample", 10);
+        while (true) 
+        {
+            await CsScriptRunner.Create().ExecuteAsync<int, WeatherForecast>("ScriptRunnerSample", 10);
+            Console.WriteLine("continue?(Y/N)");
+            var yn = Console.ReadLine();
+            if ((string.IsNullOrEmpty(yn) ? "Y" : yn) == "N")
+            {
+                break;
+            }
         }
     }
 }
