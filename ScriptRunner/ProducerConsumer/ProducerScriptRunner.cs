@@ -2,12 +2,12 @@ using System;
 using System.Threading.Tasks;
 using dotnet_script.ScriptRunner;
 
-public class CsScriptRunner : IDisposable {
-    private static readonly Lazy<CsScriptRunner> _instance = new(() => new CsScriptRunner());
+public class ProducerScriptRunner : IDisposable {
+    private static readonly Lazy<ProducerScriptRunner> _instance = new(() => new ProducerScriptRunner());
 
     private readonly ScriptRunnerCore _scriptRunnerCore;
 
-    private CsScriptRunner()
+    private ProducerScriptRunner()
     {
         _scriptRunnerCore = new();
         _scriptRunnerCore.Initialize();
@@ -18,7 +18,7 @@ public class CsScriptRunner : IDisposable {
         await _scriptRunnerCore.ExecuteAsync<TRequest, TResult>(filename, request);
     }
 
-    public static CsScriptRunner Create()
+    public static ProducerScriptRunner Create()
     {
         return _instance.Value;
     }
