@@ -6,20 +6,31 @@ using System.Transactions;
 using Dapper;
 using dotnet_script;
 using dotnet_script.Entities;
+using dotnet_script.ScriptRunner.Js;
 using dotnet_script.ScriptRunner.Sql;
+using Jint;
 using Microsoft.Data.SqlClient;
 
 public class Program
 {   
     private static async Task Main(string[] args)
     {
-        await SqlKataScript();
-
-        await SqlBuild();
-
-        await ProducerNConsumer();
-
-        await Transaction();
+        var js = new JsSqlRunnerCore();
+        var obj = new
+        {
+            Id = 1,
+            City = "seoul"
+        };
+        var result = js.Execute<string>("sql", obj);
+        Console.WriteLine(result);
+        
+        // await SqlKataScript();
+        //
+        // await SqlBuild();
+        //
+        // await ProducerNConsumer();
+        //
+        // await Transaction();
     }
 
     private static async Task SqlKataScript()

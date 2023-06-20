@@ -1,0 +1,19 @@
+function generate(obj) {
+    const id = obj.Id;
+    const city = obj.City;
+    var sql = `
+        SELECT *
+        FROM [EXAMPLE].[WEATHERFORECASTS]
+        WHERE 1=1
+    `;
+    
+    if (id > 0) {
+        sql += ` AND ID = ${id} `;
+    }
+
+    if (city !== '') {
+        sql += ` AND CITY = '${city}' `;
+    }
+    
+    return sql;
+}
